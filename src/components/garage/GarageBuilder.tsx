@@ -262,7 +262,7 @@ export function GarageBuilder({ cars, challenge, onSubmit }: GarageBuilderProps)
               <Button
                 variant="neon"
                 className="w-full"
-                disabled={buildingGarage.length === 0 || isOverBudget}
+                disabled={buildingGarage.length === 0 || !!isOverBudget}
                 onClick={() => setStep('review')}
               >
                 Continue to Review
