@@ -165,7 +165,7 @@ export function GarageBuilder({ cars, challenge, onSubmit }: GarageBuilderProps)
             </div>
 
             <div className="flex gap-4">
-              <Button variant="ghost\" onClick={() => setStep('select')} className="flex-1">
+              <Button variant="ghost" onClick={() => setStep('select')} className="flex-1">
                 Back to Selection
               </Button>
               <Button
