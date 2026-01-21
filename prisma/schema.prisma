@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  username      String?   @unique
+  password      String?
+  image         String?
+  bio           String?
+  favoriteEra   String?   @default("90s")
+  displayMode   String    @default("balanced") // "pop_culture", "collector", "balanced"
+  points        Int       @default(0)
+  streak        Int       @default(0)
+  lastActive    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  garages       Garage[]
+  submissions   GarageSubmission[]
+  invitesSent   Invite[]  @relation("InvitesSent")
+  invitesReceived Invite[] @relation("InvitesReceived")
+  unlocks       Unlock[]
+  reactions     Reaction[]
+  challengeParticipations ChallengeParticipation[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Challenge {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  theme         String    // "gran_turismo", "fast_furious", "top_gear", "doug_demuro", "radwood", "bat_auction"
+  type          String    // "budget", "era", "movie", "wildcard", "oddball", "collector"
+  budgetLimit   Int?
+  eraStart      Int?
+  eraEnd        Int?
+  movieReference String?
+  difficulty    String    @default("medium") // "easy", "medium", "hard", "expert"
+  points        Int       @default(100)
+  imageUrl      String?
+  isActive      Boolean   @default(true)
+  startsAt      DateTime
+  endsAt        DateTime
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  submissions   GarageSubmission[]
+  participations ChallengeParticipation[]
+}
+
+model ChallengeParticipation {
+  id          String   @id @default(cuid())
+  userId      String
+  challengeId String
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+}
+
+model Car {
+  id              String   @id @default(cuid())
+  make            String
+  model           String
+  year            Int
+  trim            String?
+  vin             String?
+  engineType      String?
+  horsepower      Int?
+  torque          Int?
+  transmission    String?
+  drivetrain      String?
+  weight          Int?
+  zeroToSixty     Float?
+  topSpeed        Int?
+  msrp            Int?
+  currentValue    Int?
+  imageUrl        String?
+
+  // Movie/Pop Culture References
+  movieAppearances String?
+  famousOwners    String?
+
+  // Collector Data
+  productionCount Int?
+  rarity          String?  // "common", "uncommon", "rare", "legendary"
+  auctionHistory  String?  // JSON string of auction records
+  provenance      String?  // JSON string of ownership history
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  garageEntries   GarageEntry[]
+}
+
+model Garage {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  theme       String?  // "tokyo_drift", "seinfeld", "top_gear_cool", "radwood", "movie_legends"
+  isPublic    Boolean  @default(true)
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries     GarageEntry[]
+}
+
+model GarageEntry {
+  id          String   @id @default(cuid())
+  garageId    String
+  carId       String
+  notes       String?
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  garage      Garage   @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  car         Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+model GarageSubmission {
+  id          String   @id @default(cuid())
+  userId      String
+  challengeId String
+  garageId    String?
+  title       String
+  description String?
+  totalValue  Int?
+  carIds      String   // JSON array of car IDs
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  reactions   Reaction[]
+}
+
+model Invite {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  senderId    String
+  receiverId  String?
+  status      String   @default("pending") // "pending", "accepted", "expired"
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  usedAt      DateTime?
+
+  // Relations
+  sender      User     @relation("InvitesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User?    @relation("InvitesReceived", fields: [receiverId], references: [id], onDelete: SetNull)
+}
+
+model Unlock {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "garage_theme", "sticker_pack", "badge", "feature", "challenge_type"
+  itemId      String
+  unlockedAt  DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, itemId])
+}
+
+model Reaction {
+  id           String   @id @default(cuid())
+  userId       String
+  submissionId String
+  type         String   // "fire", "respect", "legend", "sleeper", "barn_find", "money_pit"
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submission   GarageSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, submissionId])
+}
+
+model UnlockableItem {
+  id            String   @id @default(cuid())
+  type          String   // "garage_theme", "sticker_pack", "badge", "feature", "challenge_type"
+  name          String
+  description   String?
+  imageUrl      String?
+  requirement   String   // "invites_3", "streak_7", "challenge_complete_10", "group_milestone"
+  requiredCount Int      @default(1)
+  category      String?  // "pop_culture", "collector", "both"
+  createdAt     DateTime @default(now())
+}
