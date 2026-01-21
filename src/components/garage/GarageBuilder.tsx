@@ -171,7 +171,7 @@ export function GarageBuilder({ cars, challenge, onSubmit }: GarageBuilderProps)
               <Button
                 variant="neon"
                 onClick={handleSubmit}
-                disabled={!title || isOverBudget}
+                disabled={!title || !!isOverBudget}
                 className="flex-1"
               >
                 <Check size={18} className="mr-2" />
