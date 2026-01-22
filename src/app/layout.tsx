@@ -1,9 +1,20 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Orbitron, Rajdhani } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
-const inter = Inter({ subsets: ['latin'] })
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  variable: '--font-orbitron',
+  display: 'swap',
+})
+
+const rajdhani = Rajdhani({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-rajdhani',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Cars & Connection - Real Car Culture Meets Pop Nostalgia',
@@ -18,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-retro-black text-white antialiased`}>
+      <body className={`${orbitron.variable} ${rajdhani.variable} font-rajdhani bg-bg-dark text-white antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
